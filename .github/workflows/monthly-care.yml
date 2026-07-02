@@ -1,0 +1,81 @@
+name: Monthly website care checks
+
+# Runs the automatable slice of the Website Care Checklist on a schedule and
+# on demand. The human-judgement items still go in the monthly report; this
+# job makes sure the mechanical checks are already green by the time you write
+# it. Set the SITE_URL and TLS_HOST variables (or repository/environment
+# variables) to your site before enabling.
+#
+# CC BY 4.0 - UK Web Marketing (https://ukwebmarketing.com)
+
+on:
+  schedule:
+    # 07:00 UTC on the 1st of every month.
+    - cron: "0 7 1 * *"
+  workflow_dispatch:
+    inputs:
+      site_url:
+        description: "Full URL to check (overrides the SITE_URL variable)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  SITE_URL: ${{ github.event.inputs.site_url || vars.SITE_URL || 'https://example.com' }}
+  TLS_HOST: ${{ vars.TLS_HOST || 'example.com' }}
+
+jobs:
+  availability:
+    name: Uptime and security headers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Uptime check
+        run: ./scripts/check-uptime.sh "$SITE_URL"
+
+      - name: Security headers
+        run: ./scripts/check-headers.sh "$SITE_URL"
+
+  tls:
+    name: TLS certificate expiry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Certificate runway (warn under 21 days)
+        run: ./scripts/check-tls-expiry.sh "$TLS_HOST" 443 21
+
+  accessibility:
+    name: Accessibility scan (Pa11y)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Pa11y CI
+        run: npx --yes pa11y-ci --config .pa11yci.json
+
+  lighthouse:
+    name: Lighthouse budgets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Lighthouse CI
+        run: npx --yes @lhci/cli@0.13.x autorun --config=lighthouserc.json

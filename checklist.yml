@@ -1,0 +1,415 @@
+# Website Care Checklist - machine-readable form
+# The same checklist as README.md, as data you can render into a report,
+# feed a tracker, or drive a runbook. CC BY 4.0 - UK Web Marketing.
+#
+# id:        stable identifier, safe to reference from tooling
+# task:      the thing to do
+# why:       plain reason it matters
+# check:     how to verify (command or manual action)
+# automate:  where this can run without a human
+# cadence:   continuous | weekly | monthly | quarterly
+
+version: "1.0"
+license: "CC-BY-4.0"
+maintainer: "UK Web Marketing (https://ukwebmarketing.com)"
+
+sections:
+  - id: uptime
+    title: Uptime and availability
+    items:
+      - id: uptime.monitor
+        task: External uptime monitor active, checking at least every 5 minutes
+        why: Know the site is down before the client does, with a record of frequency
+        check: Confirm the monitor paged during a known outage this month
+        automate: Third-party synthetic monitor
+        cadence: continuous
+      - id: uptime.alerts
+        task: Alerts reach a human by a route they actually watch
+        why: A monitor nobody sees is decoration
+        check: Send a test alert and confirm receipt
+        automate: Monitor alerting rules
+        cadence: monthly
+      - id: uptime.deep-page
+        task: Check the homepage and one database-backed deep page
+        why: A cached homepage can stay green while a deep page 500s
+        check: scripts/check-uptime.sh with a body-string assertion
+        automate: CI or cron
+        cadence: monthly
+      - id: uptime.incidents
+        task: Review the month's incidents (count, duration, cause)
+        why: Honest totals belong in the report, not rounded away
+        check: Read the monitor's incident log
+        automate: Partial (report export)
+        cadence: monthly
+      - id: uptime.dns
+        task: DNS resolves correctly from more than one resolver
+        why: Stale records point traffic at dead hosts
+        check: dig from two resolvers; compare
+        automate: Yes
+        cadence: monthly
+
+  - id: backups
+    title: Backups and restore
+    items:
+      - id: backups.ran
+        task: Backups ran on schedule for files and database
+        why: An untested, unrun backup is a rumour
+        check: Read the backup log, not the settings screen
+        automate: Backup tooling
+        cadence: weekly
+      - id: backups.offsite
+        task: Backups stored off the origin server and in a second location
+        why: Losing the host must not lose the backups
+        check: Confirm the storage destination
+        automate: Yes
+        cadence: monthly
+      - id: backups.restore
+        task: Perform a real restore into staging this month (rotate sites)
+        why: The only backup that counts is one you have restored
+        check: Restore, confirm site loads and data is intact
+        automate: Partial
+        cadence: quarterly
+      - id: backups.rto
+        task: Restore time is measured and recorded
+        why: Clients ask "how long will I be down?"
+        check: Time the restore drill
+        automate: No
+        cadence: quarterly
+      - id: backups.retention
+        task: Retention matches the agreement; old backups pruned
+        why: Keep enough history; do not hoard or leak data
+        check: Review retention policy against the log
+        automate: Yes
+        cadence: monthly
+      - id: backups.encryption
+        task: Backups encrypted at rest with restricted access
+        why: Backups are a copy of everything sensitive
+        check: Confirm encryption and access list
+        automate: Yes
+        cadence: monthly
+
+  - id: ssl-domain
+    title: SSL, TLS and domain expiry
+    items:
+      - id: ssl.cert-runway
+        task: TLS certificate has well over two weeks of runway
+        why: Configured auto-renewal is not the same as a successful renewal
+        check: scripts/check-tls-expiry.sh
+        automate: Yes
+        cadence: continuous
+      - id: ssl.domain-expiry
+        task: Domain registration expiry 60+ days out or auto-renew verified
+        why: A lapsed domain can be expensive or impossible to recover
+        check: whois expiry; confirm billing contact and card
+        automate: Yes
+        cadence: monthly
+      - id: ssl.mixed-content
+        task: No mixed content on HTTPS pages
+        why: One http asset trips a browser warning
+        check: Browser console or crawler
+        automate: Yes
+        cadence: monthly
+      - id: ssl.redirect-hsts
+        task: HTTP permanently redirects to HTTPS; HSTS where appropriate
+        why: Users must not land on the insecure origin
+        check: curl -I on the http URL
+        automate: Yes
+        cadence: monthly
+      - id: ssl.tls-config
+        task: Modern TLS config, no deprecated protocols or weak ciphers
+        why: Old TLS is an easy downgrade target
+        check: TLS scanner
+        automate: Yes
+        cadence: quarterly
+      - id: ssl.san-coverage
+        task: Certificate covers every hostname in use (www, subdomains)
+        why: A missing SAN breaks a subdomain silently
+        check: Inspect certificate SANs
+        automate: Yes
+        cadence: monthly
+
+  - id: dependencies
+    title: Dependency and patch sweep
+    items:
+      - id: deps.audit
+        task: Run a dependency audit for the stack in use
+        why: The gap between fix released and fix applied is where attackers live
+        check: scripts/dependency-audit.sh
+        automate: CI
+        cadence: monthly
+      - id: deps.triage
+        task: Triage advisories by reachability; record deferrals
+        why: Judge by exploitable path, not raw count
+        check: Review each advisory
+        automate: No
+        cadence: monthly
+      - id: deps.apply
+        task: Apply patch and minor updates after staging tests
+        why: Small, frequent updates beat one giant risky one
+        check: Deploy after staging passes
+        automate: Partial
+        cadence: monthly
+      - id: deps.cms
+        task: CMS core, themes and plugins current; unused ones removed
+        why: Inactive code is still attackable code
+        check: CMS update screen and plugin list
+        automate: Partial
+        cadence: monthly
+      - id: deps.abandoned
+        task: Flag abandoned dependencies with a replacement plan
+        why: Unmaintained packages are slow-motion risk
+        check: Check last release and maintainer activity
+        automate: Partial
+        cadence: quarterly
+      - id: deps.lockfiles
+        task: Lockfiles committed so tested == deployed
+        why: Reproducible builds
+        check: Confirm lockfile in repo
+        automate: Yes
+        cadence: monthly
+
+  - id: security
+    title: Security patching and hardening
+    items:
+      - id: sec.platform-patch
+        task: OS, runtime and managed-platform patches applied
+        why: The surrounding config decides whether a bug becomes an incident
+        check: Package manager and platform notices
+        automate: Partial
+        cadence: monthly
+      - id: sec.headers
+        task: Security headers present (CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)
+        why: Cheap defence-in-depth against common attacks
+        check: scripts/check-headers.sh
+        automate: Yes
+        cadence: monthly
+      - id: sec.admin
+        task: Admin surfaces protected with strong creds and MFA
+        why: Admin is the highest-value target
+        check: Confirm MFA and non-default admin paths
+        automate: Partial
+        cadence: monthly
+      - id: sec.accounts
+        task: Unused accounts removed; access reviewed
+        why: Every working login is a door
+        check: Review the user list
+        automate: No
+        cadence: quarterly
+      - id: sec.rate-limit
+        task: Rate limiting or WAF in front of login and form endpoints
+        why: Blunt brute-force and spam
+        check: Confirm rule is active
+        automate: Yes
+        cadence: monthly
+      - id: sec.secrets
+        task: No secrets in the repo or client-side code
+        why: Committed keys leak forever
+        check: grep the codebase and git history for keys and tokens
+        automate: CI secret scan
+        cadence: monthly
+      - id: sec.permissions
+        task: Least-privilege file permissions; directory listing off
+        why: Limit blast radius and information disclosure
+        check: Inspect permissions and try to list a directory
+        automate: Partial
+        cadence: quarterly
+      - id: sec.errors
+        task: Production error output is generic, no stack traces or versions
+        why: Verbose errors hand attackers a map
+        check: Trigger a 500 on staging and inspect output
+        automate: Partial
+        cadence: monthly
+
+  - id: accessibility
+    title: Accessibility sweep
+    items:
+      - id: a11y.scan
+        task: Run an automated scan across home, a content page and a form
+        why: Legal expectation, moral one, and it helps SEO
+        check: .pa11yci.json or Lighthouse accessibility category
+        automate: CI
+        cadence: monthly
+      - id: a11y.contrast
+        task: Colour contrast meets WCAG AA
+        why: Low contrast excludes real users; drifts on theme changes
+        check: Contrast checker on text and controls
+        automate: Partial
+        cadence: monthly
+      - id: a11y.alt-text
+        task: Meaningful alt on content images; empty alt on decorative
+        why: Screen readers depend on it
+        check: Review image markup
+        automate: Partial
+        cadence: monthly
+      - id: a11y.keyboard
+        task: Keyboard-only pass on the primary journey
+        why: Automated tools miss most keyboard traps
+        check: Tab through the page manually
+        automate: No
+        cadence: quarterly
+      - id: a11y.forms
+        task: Forms have associated labels; errors announced not colour-only
+        why: Unlabelled fields are unusable with assistive tech
+        check: Inspect form markup and error handling
+        automate: Partial
+        cadence: monthly
+      - id: a11y.headings
+        task: Headings in logical order and descriptive
+        why: Assistive tech navigates by them
+        check: Outline the page headings
+        automate: Partial
+        cadence: monthly
+      - id: a11y.media
+        task: Captions or transcripts for audio and video
+        why: Media is inaccessible without them
+        check: Confirm captions exist
+        automate: No
+        cadence: monthly
+
+  - id: performance
+    title: Performance and Core Web Vitals
+    items:
+      - id: perf.lighthouse
+        task: Run Lighthouse on home and a conversion page, throttled
+        why: A slow site loses customers and ranking
+        check: lighthouserc.json budgets
+        automate: CI
+        cadence: monthly
+      - id: perf.cwv
+        task: Core Web Vitals (LCP, INP, CLS) within Google's good range on mobile
+        why: Mobile is the profile that bites
+        check: Lighthouse or field data
+        automate: Yes
+        cadence: monthly
+      - id: perf.images
+        task: Images right-sized, modern format, lazy-loaded, dimensioned
+        why: Images are usually the heaviest, easiest win
+        check: Audit image weights and formats
+        automate: Partial
+        cadence: monthly
+      - id: perf.caching
+        task: Caching and compression enabled
+        why: Free speed for repeat and first visits
+        check: Inspect response headers
+        automate: Yes
+        cadence: monthly
+      - id: perf.third-party
+        task: Third-party scripts justified and pruned
+        why: Each tag taxes load time and privacy
+        check: List and question every tag
+        automate: No
+        cadence: monthly
+      - id: perf.weight-trend
+        task: Total page weight has not crept up month on month
+        why: Decay is gradual; the trend reveals it
+        check: Record page weight and compare
+        automate: Partial
+        cadence: monthly
+
+  - id: seo
+    title: SEO and indexing health
+    items:
+      - id: seo.indexable
+        task: Live pages are indexable; no accidental noindex or robots block
+        why: A stray noindex quietly removes you from search
+        check: Inspect robots.txt, meta robots, and index coverage
+        automate: Partial
+        cadence: monthly
+      - id: seo.sitemap
+        task: XML sitemap current and lists live canonical URLs only
+        why: A stale sitemap wastes crawl budget
+        check: Fetch and spot-check the sitemap
+        automate: Yes
+        cadence: monthly
+      - id: seo.links
+        task: No new broken links or long redirect chains
+        why: Cheap to catch monthly, painful to notice late
+        check: Crawl the site
+        automate: Yes
+        cadence: monthly
+      - id: seo.metadata
+        task: Unique titles and descriptions; canonicals correct
+        why: Duplicate or missing metadata dilutes ranking
+        check: Crawl and review metadata
+        automate: Partial
+        cadence: monthly
+      - id: seo.structured-data
+        task: Structured data still validates if relied upon
+        why: Broken markup drops rich results
+        check: Structured-data validator
+        automate: Yes
+        cadence: monthly
+      - id: seo.search-console
+        task: No new coverage or manual-action warnings
+        why: Early warning of a real problem
+        check: Read Search Console
+        automate: Partial
+        cadence: monthly
+
+  - id: integrations
+    title: Forms, email and integrations
+    items:
+      - id: int.forms
+        task: Submit a live test through every important form
+        why: A dead form looks perfectly normal on the page
+        check: Submit and confirm the message arrives
+        automate: Partial
+        cadence: monthly
+      - id: int.email
+        task: Transactional email delivered, not spam; SPF/DKIM/DMARC pass
+        why: Undelivered mail costs business silently
+        check: Send a test; check auth alignment
+        automate: Partial
+        cadence: monthly
+      - id: int.spam
+        task: Spam protection works without blocking real people
+        why: Balance real submissions against bots
+        check: Confirm CAPTCHA and honeypot both function
+        automate: Partial
+        cadence: monthly
+      - id: int.third-party
+        task: Payment, booking, CRM, newsletter integrations authenticate and sync
+        why: Expired keys break flows quietly
+        check: Confirm sync; rotate keys nearing expiry
+        automate: Partial
+        cadence: monthly
+      - id: int.webhooks
+        task: Webhooks arriving with signature verification enforced
+        why: Unverified webhooks are a spoofing risk
+        check: Confirm delivery and signature checks
+        automate: Yes
+        cadence: monthly
+
+  - id: reporting
+    title: Reporting and sign-off
+    items:
+      - id: report.fill
+        task: Complete the monthly report from the template
+        why: The report is the product of the care work
+        check: templates/monthly-report.md filled in
+        automate: No
+        cadence: monthly
+      - id: report.owners
+        task: Every failed check has an owner and a date
+        why: No item left red without a plan
+        check: Review the outstanding list
+        automate: No
+        cadence: monthly
+      - id: report.metrics
+        task: Record trending metrics (uptime, page weight, CWV, expiry days)
+        why: Trends tell the story a snapshot cannot
+        check: Fill the metrics table
+        automate: Partial
+        cadence: monthly
+      - id: report.decisions
+        task: Flag anything needing a decision or budget
+        why: Make it a conversation, not a surprise
+        check: Review the flagged list with the client
+        automate: No
+        cadence: monthly
+      - id: report.store
+        task: Store the report and note the next cycle date
+        why: A findable paper trail protects everyone
+        check: Confirm the report is filed
+        automate: No
+        cadence: monthly
