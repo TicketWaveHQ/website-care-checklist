@@ -11,8 +11,8 @@
 #   ./check-headers.sh https://example.com
 #
 # Exit codes: 0 all expected headers present, 1 one or more missing,
-# 3 request failed. Part of the Website Care Checklist by UK Web Marketing
-# (https://ukwebmarketing.com), CC BY 4.0.
+# 3 request failed. Part of the Website Care Checklist by TicketWave HQ
+# (https://ticketwavehq.com), CC BY 4.0.
 
 set -euo pipefail
 

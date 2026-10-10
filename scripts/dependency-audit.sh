@@ -10,8 +10,8 @@
 # It runs every audit whose manifest it finds, and exits non-zero if any of
 # them report vulnerabilities, so it can gate CI.
 #
-# Part of the Website Care Checklist by UK Web Marketing
-# (https://ukwebmarketing.com), CC BY 4.0.
+# Part of the Website Care Checklist by TicketWave HQ
+# (https://ticketwavehq.com), CC BY 4.0.
 
 set -uo pipefail
 

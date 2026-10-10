@@ -14,8 +14,8 @@
 # Exit codes: 0 comfortable runway, 1 below the warn threshold,
 # 2 already expired, 3 could not read the certificate.
 #
-# Requires: openssl. Part of the Website Care Checklist by UK Web Marketing
-# (https://ukwebmarketing.com), CC BY 4.0.
+# Requires: openssl. Part of the Website Care Checklist by TicketWave HQ
+# (https://ticketwavehq.com), CC BY 4.0.
 
 set -euo pipefail
 

@@ -1,6 +1,6 @@
 # Website Care Checklist - machine-readable form
 # The same checklist as README.md, as data you can render into a report,
-# feed a tracker, or drive a runbook. CC BY 4.0 - UK Web Marketing.
+# feed a tracker, or drive a runbook. CC BY 4.0 - TicketWave HQ.
 #
 # id:        stable identifier, safe to reference from tooling
 # task:      the thing to do
@@ -11,7 +11,7 @@
 
 version: "1.0"
 license: "CC-BY-4.0"
-maintainer: "UK Web Marketing (https://ukwebmarketing.com)"
+maintainer: "TicketWave HQ (https://ticketwavehq.com)"
 
 sections:
   - id: uptime

@@ -6,7 +6,7 @@ name: Monthly website care checks
 # it. Set the SITE_URL and TLS_HOST variables (or repository/environment
 # variables) to your site before enabling.
 #
-# CC BY 4.0 - UK Web Marketing (https://ukwebmarketing.com)
+# CC BY 4.0 - TicketWave HQ (https://ticketwavehq.com)
 
 on:
   schedule:

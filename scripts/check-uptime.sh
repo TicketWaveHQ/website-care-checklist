@@ -14,8 +14,8 @@
 # Exit codes: 0 healthy, 1 status mismatch, 2 body assertion failed,
 # 3 request failed (timeout, DNS, connection).
 #
-# Part of the Website Care Checklist by UK Web Marketing
-# (https://ukwebmarketing.com), CC BY 4.0.
+# Part of the Website Care Checklist by TicketWave HQ
+# (https://ticketwavehq.com), CC BY 4.0.
 
 set -euo pipefail
 

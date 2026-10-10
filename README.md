@@ -234,9 +234,9 @@ The goal is that by report time, the boring checks are already done and green, a
 
 ## Who maintains this
 
-This checklist is maintained by [UK Web Marketing](https://ukwebmarketing.com), a small studio that builds and looks after websites for small businesses, where this is the routine we run on the sites in our care every month.
+This checklist is maintained by [TicketWave HQ](https://ticketwavehq.com) and run every month on the sites [VerySEOly](https://veryseoly.com) (formerly UK Web Marketing) builds and looks after for UK businesses.
 
-For sites that answer to a regulator or a formal assurance standard, that same hygiene has to be built to a documented baseline and evidenced, not just performed. That is the job of our sibling brand [Custodiance](https://custodiance.com), which delivers managed infrastructure and website care built to your regulator's standard, with the paper trail to prove it. The free checklist here is the shared foundation both stand on: [UK Web Marketing](https://ukwebmarketing.com) for straightforward small-business care, and [Custodiance](https://custodiance.com) where the assurance bar is higher.
+For sites that answer to a regulator or a formal assurance standard, that same hygiene has to be built to a documented baseline and evidenced, not just performed. That is the job of our sibling brand [Custodiance](https://custodiance.com), which delivers managed infrastructure and website care built to your regulator's standard, with the paper trail to prove it. The free checklist here is the shared foundation both stand on: [VerySEOly](https://veryseoly.com) for straightforward small-business care, and [Custodiance](https://custodiance.com) where the assurance bar is higher.
 
 You do not need either of them to use this repo. It is here to be useful on its own.
 
@@ -252,4 +252,4 @@ Improvements are welcome. If a check is missing, unclear, or plain wrong, open a
 
 This work is licensed under a [Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
 
-You may share and adapt it, including commercially, as long as you give appropriate credit. Fork it, rebrand it, and make it your own team's runbook. Attribution to [UK Web Marketing](https://ukwebmarketing.com) is all we ask.
+You may share and adapt it, including commercially, as long as you give appropriate credit. Fork it, rebrand it, and make it your own team's runbook. Attribution to [TicketWave HQ](https://ticketwavehq.com) is all we ask. See [NOTICE](NOTICE).

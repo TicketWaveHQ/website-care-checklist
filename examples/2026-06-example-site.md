@@ -185,5 +185,5 @@ replacement and bring the option to you rather than let it drift.
 
 ---
 
-*Prepared using the Website Care Checklist by UK Web Marketing
-(https://ukwebmarketing.com), CC BY 4.0.*
+*Prepared using the Website Care Checklist by TicketWave HQ
+(https://ticketwavehq.com), CC BY 4.0.*
