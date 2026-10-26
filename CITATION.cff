@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use or adapt this work, please cite it as below."
+title: "Website Care Checklist"
+abstract: "The monthly managed-website care checklist: uptime, backups, SSL and domain-expiry, dependency and accessibility sweeps, security patching, and reporting. Real, runnable checks with scripts, Lighthouse and Pa11y configs, a report template, and a scheduled workflow."
+type: software
+authors:
+  - family-names: Gilbert
+    given-names: Jordan
+    alias: sansware
+    affiliation: "TicketWave HQ Ltd"
+    website: "https://veryseoly.com/jordan"
+contact:
+  - name: "TicketWave HQ Ltd"
+    website: "https://ticketwavehq.com"
+    email: hello@ticketwavehq.com
+repository-code: "https://github.com/TicketWaveHQ/website-care-checklist"
+url: "https://ticketwavehq.com/practices/growth-and-digital"
+license: CC-BY-4.0
+date-released: "2026-07-02"
+keywords:
+  - accessibility
+  - backups
+  - checklist
+  - core-web-vitals
+  - dependency-audit
+  - lighthouse
+  - managed-hosting
+  - pa11y
+  - security
+  - seo
+  - small-business
+  - ssl
