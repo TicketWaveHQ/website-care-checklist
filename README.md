@@ -234,9 +234,9 @@ The goal is that by report time, the boring checks are already done and green, a
 
 ## Who maintains this
 
-This checklist is maintained by [TicketWave HQ](https://ticketwavehq.com) and run every month on the sites [VerySEOly](https://veryseoly.com) (formerly UK Web Marketing) builds and looks after for UK businesses.
+This checklist is written and maintained by [Jordan Gilbert](https://veryseoly.com/jordan) ([@sansware](https://github.com/sansware)) for [TicketWave HQ](https://ticketwavehq.com), and run every month on the sites [VerySEOly](https://veryseoly.com) (formerly UK Web Marketing) builds and looks after for UK businesses.
 
-For sites that answer to a regulator or a formal assurance standard, that same hygiene has to be built to a documented baseline and evidenced, not just performed. That is the job of our sibling brand [Custodiance](https://custodiance.com), which delivers managed infrastructure and website care built to your regulator's standard, with the paper trail to prove it. The free checklist here is the shared foundation both stand on: [VerySEOly](https://veryseoly.com) for straightforward small-business care, and [Custodiance](https://custodiance.com) where the assurance bar is higher.
+For sites that answer to a regulator or a formal assurance standard, that same hygiene has to be built to a documented baseline and evidenced, not just performed. That is the job of our sibling brand [Custodiance](https://custodiance.com), which delivers managed infrastructure and website care built to your regulator's standard, with the paper trail to prove it. The free checklist here is the shared foundation both stand on: [VerySEOly](https://veryseoly.com) for straightforward website care, and [Custodiance](https://custodiance.com) where the assurance bar is higher.
 
 You do not need either of them to use this repo. It is here to be useful on its own.
 
