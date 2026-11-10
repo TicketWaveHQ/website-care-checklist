@@ -1,0 +1,55 @@
+name: CI
+
+# Offline checks for this repository: no live sites, no secrets, no deploy.
+# The scripts are exercised against a local fixture server (tests/smoke.sh),
+# so a pull request never fails because someone else's site is down.
+# The live checks against your own site are in monthly-care.yml.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    name: Scripts, configs and house style
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Shell syntax
+        run: |
+          for f in scripts/*.sh tests/*.sh; do
+            bash -n "$f" && echo "ok  $f"
+          done
+
+      - name: JSON configs parse
+        run: |
+          for f in .pa11yci.json lighthouserc.json; do
+            python3 -m json.tool "$f" > /dev/null && echo "ok  $f"
+          done
+
+      - name: checklist.yml keeps its documented shape
+        run: |
+          python3 -c 'import yaml' 2>/dev/null || {
+            sudo apt-get update -q && sudo apt-get install -y -q python3-yaml
+          }
+          python3 tests/validate_checklist.py
+
+      - name: Smoke-test the scripts against local fixtures
+        run: ./tests/smoke.sh
+
+      - name: House style (no em-dashes)
+        run: |
+          if grep -rnP "\x{2014}" --exclude-dir=.git \
+              --include='*.md' --include='*.sh' --include='*.py' --include='*.yml' \
+              --include='*.json' --include='*.cff' --include='.pa11yci.json' .; then
+            echo "::error::Found em-dash characters (U+2014). Use a comma or a spaced hyphen instead."
+            exit 1
+          fi
+          echo "No em-dashes found."
