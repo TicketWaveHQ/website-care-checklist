@@ -16,7 +16,8 @@ contact:
 repository-code: "https://github.com/TicketWaveHQ/website-care-checklist"
 url: "https://ticketwavehq.com/practices/digital"
 license: CC-BY-4.0
-date-released: "2026-07-02"
+version: "1.0.0"
+date-released: "2026-11-10"
 keywords:
   - accessibility
   - backups
