@@ -1,10 +1,19 @@
 name: Monthly website care checks
 
-# Runs the automatable slice of the Website Care Checklist on a schedule and
-# on demand. The human-judgement items still go in the monthly report; this
-# job makes sure the mechanical checks are already green by the time you write
-# it. Set the SITE_URL and TLS_HOST variables (or repository/environment
-# variables) to your site before enabling.
+# Runs the automatable slice of the Website Care Checklist against YOUR site,
+# on the 1st of each month and on demand. The human-judgement items still go
+# in the monthly report; this job makes sure the mechanical checks are already
+# green by the time you write it.
+#
+# It checks nothing until you say which site. Set the repository variable
+# SITE_URL (Settings > Secrets and variables > Actions > Variables), or enter
+# a URL when you run it by hand. Optional variables:
+#   CARE_PATHS   space-separated paths for Pa11y and Lighthouse (default "/")
+#   TLS_HOST     host for the certificate check (default: the host in SITE_URL)
+#   UPTIME_BODY  text the page at SITE_URL must contain (default: no check)
+#
+# With no SITE_URL the scheduled run only reports that nothing is configured,
+# and succeeds. Offline tests of the scripts themselves are in ci.yml.
 #
 # CC BY 4.0 - TicketWave HQ (https://ticketwavehq.com)
 
@@ -23,59 +32,134 @@ permissions:
   contents: read
 
 env:
-  SITE_URL: ${{ github.event.inputs.site_url || vars.SITE_URL || 'https://example.com' }}
-  TLS_HOST: ${{ vars.TLS_HOST || 'example.com' }}
+  SITE_URL: ${{ inputs.site_url || vars.SITE_URL }}
+  CARE_PATHS: ${{ vars.CARE_PATHS || '/' }}
 
 jobs:
+  target:
+    name: Resolve target
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      configured: ${{ steps.resolve.outputs.configured }}
+      site_url: ${{ steps.resolve.outputs.site_url }}
+      base_url: ${{ steps.resolve.outputs.base_url }}
+      tls_host: ${{ steps.resolve.outputs.tls_host }}
+    steps:
+      - id: resolve
+        env:
+          TLS_HOST_VAR: ${{ vars.TLS_HOST }}
+        run: |
+          if [ -z "$SITE_URL" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No SITE_URL is set, so there is nothing to check. Set the SITE_URL repository variable, or pass site_url when running by hand."
+            echo "No target configured. Set the \`SITE_URL\` repository variable to enable these checks." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          case "$SITE_URL" in
+            http://*|https://*) ;;
+            *) echo "::error::SITE_URL must start with http:// or https://"; exit 1 ;;
+          esac
+          host="${SITE_URL#*://}"; host="${host%%/*}"; host="${host%%:*}"
+          {
+            echo "configured=true"
+            echo "site_url=$SITE_URL"
+            echo "base_url=$(printf '%s' "$SITE_URL" | sed -E 's#^(https?://[^/]+).*#\1#')"
+            echo "tls_host=${TLS_HOST_VAR:-$host}"
+          } >> "$GITHUB_OUTPUT"
+          echo "Checking $SITE_URL (paths: $CARE_PATHS)" >> "$GITHUB_STEP_SUMMARY"
+
   availability:
     name: Uptime and security headers
+    needs: target
+    if: needs.target.outputs.configured == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      URL: ${{ needs.target.outputs.site_url }}
+      UPTIME_BODY: ${{ vars.UPTIME_BODY }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Make scripts executable
-        run: chmod +x scripts/*.sh
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Uptime check
-        run: ./scripts/check-uptime.sh "$SITE_URL"
+        run: |
+          rc=0; out="$(./scripts/check-uptime.sh "$URL" 200 "$UPTIME_BODY" 2>&1)" || rc=$?
+          printf '%s\n' "$out"
+          printf '### Uptime\n\n```text\n%s\n```\n\n' "$out" >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
 
       - name: Security headers
-        run: ./scripts/check-headers.sh "$SITE_URL"
+        if: always()
+        run: |
+          rc=0; out="$(./scripts/check-headers.sh "$URL" 2>&1)" || rc=$?
+          printf '%s\n' "$out"
+          printf '### Security headers\n\n```text\n%s\n```\n\n' "$out" >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
 
   tls:
     name: TLS certificate expiry
+    needs: target
+    if: needs.target.outputs.configured == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TLS_HOST: ${{ needs.target.outputs.tls_host }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Make scripts executable
-        run: chmod +x scripts/*.sh
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Certificate runway (warn under 21 days)
-        run: ./scripts/check-tls-expiry.sh "$TLS_HOST" 443 21
+        run: |
+          rc=0; out="$(./scripts/check-tls-expiry.sh "$TLS_HOST" 443 21 2>&1)" || rc=$?
+          printf '%s\n' "$out"
+          printf '### TLS certificate\n\n```text\n%s\n```\n\n' "$out" >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
 
   accessibility:
     name: Accessibility scan (Pa11y)
+    needs: target
+    if: needs.target.outputs.configured == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BASE: ${{ needs.target.outputs.base_url }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: "20"
+          node-version: "24"
+
+      - name: Point the Pa11y config at the target
+        run: |
+          jq --arg base "$BASE" --arg paths "$CARE_PATHS" '
+            .urls = ($paths | split(" ") | map(select(length > 0))
+                     | map(if startswith("/") then . else "/" + . end)
+                     | map($base + .))
+          ' .pa11yci.json > "$RUNNER_TEMP/pa11yci.json"
+          jq -r '.urls[]' "$RUNNER_TEMP/pa11yci.json"
 
       - name: Run Pa11y CI
-        run: npx --yes pa11y-ci --config .pa11yci.json
+        run: npx --yes pa11y-ci@4 --config "$RUNNER_TEMP/pa11yci.json"
 
   lighthouse:
     name: Lighthouse budgets
+    needs: target
+    if: needs.target.outputs.configured == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BASE: ${{ needs.target.outputs.base_url }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: "20"
+          node-version: "24"
+
+      - name: Point the Lighthouse config at the target
+        run: |
+          jq --arg base "$BASE" --arg paths "$CARE_PATHS" '
+            .ci.collect.url = ($paths | split(" ") | map(select(length > 0))
+                               | map(if startswith("/") then . else "/" + . end)
+                               | map($base + .))
+          ' lighthouserc.json > "$RUNNER_TEMP/lighthouserc.json"
+          jq -r '.ci.collect.url[]' "$RUNNER_TEMP/lighthouserc.json"
 
       - name: Run Lighthouse CI
-        run: npx --yes @lhci/cli@0.13.x autorun --config=lighthouserc.json
+        run: npx --yes @lhci/cli@0.15.x autorun --config="$RUNNER_TEMP/lighthouserc.json"

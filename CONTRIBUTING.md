@@ -35,6 +35,14 @@ The shell scripts target Bash and aim to run on both Linux and macOS with only
 `curl` and `openssl` available. Keep them dependency-light, `set -euo pipefail`
 where practical, and give them clear exit codes so they can gate CI.
 
+If you change a script or its exit codes, add or update a case in
+`tests/smoke.sh` and run it (`./tests/smoke.sh`; it needs `python3` and talks
+only to `127.0.0.1`). CI runs the same test on every pull request, plus
+`python3 tests/validate_checklist.py` for `checklist.yml`.
+
+Security problems in the scripts go through [`SECURITY.md`](SECURITY.md), not a
+public issue.
+
 ## How to propose a change
 
 Open an issue to discuss anything substantial, or send a pull request for

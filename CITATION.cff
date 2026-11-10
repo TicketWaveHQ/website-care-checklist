@@ -6,7 +6,7 @@ type: software
 authors:
   - family-names: Gilbert
     given-names: Jordan
-    alias: sansware
+    alias: eu-jordangilbert
     affiliation: "TicketWave HQ Ltd"
     website: "https://veryseoly.com/jordan"
 contact:
@@ -16,7 +16,8 @@ contact:
 repository-code: "https://github.com/TicketWaveHQ/website-care-checklist"
 url: "https://ticketwavehq.com/practices/digital"
 license: CC-BY-4.0
-date-released: "2026-07-02"
+version: "1.0.0"
+date-released: "2026-11-10"
 keywords:
   - accessibility
   - backups
