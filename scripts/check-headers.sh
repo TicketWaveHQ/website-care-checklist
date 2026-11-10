@@ -10,6 +10,9 @@
 # Example:
 #   ./check-headers.sh https://example.com
 #
+# Redirects are followed, and only the final response's headers count: a
+# header sent on a redirect hop does not protect the page you land on.
+#
 # Exit codes: 0 all expected headers present, 1 one or more missing,
 # 3 request failed. Part of the Website Care Checklist by TicketWave HQ
 # (https://ticketwavehq.com), CC BY 4.0.
@@ -34,10 +37,15 @@ EXPECTED=(
   "x-frame-options"
 )
 
-headers="$(curl -sS -L -D - -o /dev/null --max-time "$TIMEOUT" "$URL")" || {
+all_headers="$(curl -sS -L -D - -o /dev/null --max-time "$TIMEOUT" "$URL")" || {
   echo "FAIL  request error for $URL" >&2
   exit 3
 }
+
+# With -L, curl prints the headers of every response in the redirect chain.
+# Keep only the last block (the final response), and drop carriage returns.
+headers="$(printf '%s\n' "$all_headers" | tr -d '\r' \
+  | awk '/^HTTP\//{block=""} {block=block $0 "\n"} END{printf "%s", block}')"
 
 # Lower-case the header names for matching.
 lower_headers="$(printf '%s' "$headers" | tr '[:upper:]' '[:lower:]')"
@@ -46,8 +54,10 @@ missing=0
 echo "Security headers for $URL"
 echo "-----------------------------------------"
 for h in "${EXPECTED[@]}"; do
-  if printf '%s' "$lower_headers" | grep -q "^${h}:"; then
-    value="$(printf '%s' "$headers" | grep -i "^${h}:" | head -n1 | cut -d: -f2- | sed 's/^ *//')"
+  # Here-strings rather than pipes into grep -q: under pipefail, grep -q can
+  # exit before printf finishes and turn a match into a false "missing".
+  if grep -q "^${h}:" <<<"$lower_headers"; then
+    value="$(grep -i -m1 "^${h}:" <<<"$headers" | cut -d: -f2- | sed 's/^ *//')"
     printf 'present  %-28s %s\n' "$h" "$value"
   else
     printf 'MISSING  %-28s\n' "$h"

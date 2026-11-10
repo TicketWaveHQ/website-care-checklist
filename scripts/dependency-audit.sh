@@ -10,13 +10,19 @@
 # It runs every audit whose manifest it finds, and exits non-zero if any of
 # them report vulnerabilities, so it can gate CI.
 #
+# Exit codes: 0 clean (or nothing to audit), 1 an audit reported issues,
+# 3 the path does not exist.
+#
 # Part of the Website Care Checklist by TicketWave HQ
 # (https://ticketwavehq.com), CC BY 4.0.
 
 set -uo pipefail
 
 ROOT="${1:-.}"
-cd "$ROOT"
+cd "$ROOT" 2>/dev/null || {
+  echo "FAIL  no such directory: $ROOT" >&2
+  exit 3
+}
 
 ran=0
 failed=0
