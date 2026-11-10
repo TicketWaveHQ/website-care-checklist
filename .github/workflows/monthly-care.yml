@@ -79,8 +79,7 @@ jobs:
       URL: ${{ needs.target.outputs.site_url }}
       UPTIME_BODY: ${{ vars.UPTIME_BODY }}
     steps:
-      - uses: actions/checkout@v7
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Uptime check
         run: |
           rc=0; out="$(./scripts/check-uptime.sh "$URL" 200 "$UPTIME_BODY" 2>&1)" || rc=$?
@@ -105,8 +104,7 @@ jobs:
     env:
       TLS_HOST: ${{ needs.target.outputs.tls_host }}
     steps:
-      - uses: actions/checkout@v7
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Certificate runway (warn under 21 days)
         run: |
           rc=0; out="$(./scripts/check-tls-expiry.sh "$TLS_HOST" 443 21 2>&1)" || rc=$?
@@ -123,9 +121,8 @@ jobs:
     env:
       BASE: ${{ needs.target.outputs.base_url }}
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "24"
 
@@ -150,9 +147,8 @@ jobs:
     env:
       BASE: ${{ needs.target.outputs.base_url }}
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "24"
 
