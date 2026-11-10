@@ -2,9 +2,30 @@
 
 **The monthly managed-website care checklist for small business sites: uptime, backups, SSL and domain expiry, dependency and accessibility sweeps, security patching, and reporting.**
 
+**What it is:** a ten-section checklist (in this README and as data in [`checklist.yml`](checklist.yml)), four small Bash scripts for the mechanical checks, Pa11y and Lighthouse configs, a monthly report template, and a GitHub Actions workflow that runs the automatable checks against your site each month.
+
+**Who it is for:** whoever looks after a live site after launch: a freelancer with a handful of client sites, an in-house maintainer, or an agency running managed care.
+
+## 60-second start
+
+You need `bash`, `curl` and `openssl`, which macOS and most Linux systems already have.
+
+```bash
+git clone https://github.com/TicketWaveHQ/website-care-checklist.git
+cd website-care-checklist
+
+./scripts/check-uptime.sh https://your-site.example        # status (and optionally a body string)
+./scripts/check-tls-expiry.sh your-site.example            # days left on the live certificate
+./scripts/check-headers.sh https://your-site.example       # six security headers, present or missing
+```
+
+Then copy [`templates/monthly-report.md`](templates/monthly-report.md), work through [the monthly checklist](#the-monthly-checklist), and paste the script output into the report. To run the checks every month without remembering, see [Automating the checklist](#automating-the-checklist).
+
+## Why this exists
+
 A site is not "done" when it launches. It quietly rots: certificates expire, dependencies pick up CVEs, backups silently stop running, a plugin update breaks a form, an image balloons the page weight, contrast drifts below the accessibility line. Most of that decay is invisible until a customer hits it, and by then it is an emergency instead of a five-minute fix.
 
-This repository is the checklist we actually work through every month to stop that from happening. It is written for whoever holds the pager: a freelancer looking after a handful of client sites, an in-house maintainer, or an agency running managed care at scale. Every item is a real, do-able task with a plain reason, a way to check it, and a note on how to automate it so a human never has to remember.
+This repository is the checklist we actually work through every month to stop that from happening. Every item is a real, do-able task with a plain reason, a way to check it, and a note on how to automate it so a human never has to remember.
 
 It is licensed **CC BY 4.0**, so you are free to fork it, rename it, and make it your own runbook. If it saves you an outage, that is the whole point.
 
@@ -12,6 +33,8 @@ It is licensed **CC BY 4.0**, so you are free to fork it, rename it, and make it
 
 ## Contents
 
+- [60-second start](#60-second-start)
+- [Why this exists](#why-this-exists)
 - [How to use this checklist](#how-to-use-this-checklist)
 - [The monthly checklist](#the-monthly-checklist)
   - [1. Uptime and availability](#1-uptime-and-availability)
@@ -200,6 +223,8 @@ Treat "monthly" as the default and pull anything urgent forward. A critical vuln
 website-care-checklist/
 ├── README.md                     # this file: the full checklist
 ├── LICENSE                       # CC BY 4.0
+├── CHANGELOG.md                  # what changed, release by release
+├── SECURITY.md                   # how to report a security problem
 ├── lighthouserc.json             # Lighthouse CI budgets (performance + a11y + SEO)
 ├── .pa11yci.json                 # Pa11y CI accessibility config
 ├── checklist.yml                 # the checklist as machine-readable data
@@ -212,11 +237,16 @@ website-care-checklist/
 │   ├── check-tls-expiry.sh       # days remaining on the live certificate
 │   ├── check-headers.sh          # print security headers
 │   └── dependency-audit.sh       # run the right audit for the stack found
+├── tests/
+│   ├── smoke.sh                  # offline tests of the scripts' exit codes
+│   ├── server.py                 # local fixture server the smoke test uses
+│   └── validate_checklist.py     # checks checklist.yml keeps its shape
 └── .github/workflows/
-    └── monthly-care.yml          # scheduled run of the automatable checks
+    ├── ci.yml                    # offline checks on every push and pull request
+    └── monthly-care.yml          # monthly run of the automatable checks on your site
 ```
 
-Every file is functional. The scripts run, the configs are valid, and the workflow is a real starting point rather than a placeholder.
+Every file is functional. On every push and pull request, CI runs the scripts against a local fixture server (`./tests/smoke.sh`), checks that the configs parse and that `checklist.yml` keeps its shape, without touching any live site. The URLs in `.pa11yci.json` and `lighthouserc.json` are `example.com` placeholders for running the tools yourself; the monthly workflow replaces them with your site.
 
 ---
 
@@ -226,7 +256,18 @@ A checklist a human has to remember is a checklist that gets skipped in a busy m
 
 - **Uptime, TLS, and domain expiry** belong on a monitor that pages you. The included scripts turn each into one command you can schedule.
 - **Dependency audits, Lighthouse budgets, and accessibility scans** slot into CI so a bad change fails the build before it reaches production. See [`lighthouserc.json`](lighthouserc.json) and [`.pa11yci.json`](.pa11yci.json).
-- **The scheduled workflow** in [`.github/workflows/monthly-care.yml`](.github/workflows/monthly-care.yml) runs the automatable checks on the first of each month and opens the results where you will see them, leaving the human-judgement items for the report.
+- **The scheduled workflow** in [`.github/workflows/monthly-care.yml`](.github/workflows/monthly-care.yml) runs the automatable checks on the first of each month, or whenever you run it by hand, and writes the uptime, header and certificate results to the run's summary page. It leaves the human-judgement items for the report.
+
+To switch the workflow on in your own copy of this repository, add these repository variables (Settings, then Secrets and variables, then Actions, then Variables):
+
+| Variable | Required | What it does |
+| --- | --- | --- |
+| `SITE_URL` | Yes | The page to check, for example `https://your-site.example/`. With no `SITE_URL`, the monthly run reports that nothing is configured and succeeds. |
+| `CARE_PATHS` | No | Space-separated paths from the site root for Pa11y and Lighthouse, for example `/ /contact`. Defaults to `/`. |
+| `TLS_HOST` | No | Host for the certificate check. Defaults to the host in `SITE_URL`. |
+| `UPTIME_BODY` | No | Text the page at `SITE_URL` must contain, to catch "200 but broken". |
+
+You can also run it once against any URL from the Actions tab (Run workflow, then enter `site_url`).
 
 The goal is that by report time, the boring checks are already done and green, and your attention is free for the things only a person can weigh.
 
@@ -234,9 +275,9 @@ The goal is that by report time, the boring checks are already done and green, a
 
 ## Who maintains this
 
-This checklist is written and maintained by [Jordan Gilbert](https://veryseoly.com/jordan) ([@sansware](https://github.com/sansware)) for [TicketWave HQ](https://ticketwavehq.com), and run every month on the sites [VerySEOly](https://veryseoly.com) (formerly UK Web Marketing) builds and looks after for UK businesses.
+This checklist is written and maintained by [Jordan Gilbert](https://veryseoly.com/jordan) ([@eu-jordangilbert](https://github.com/eu-jordangilbert)) for [TicketWave HQ](https://ticketwavehq.com), as part of its [digital practice](https://ticketwavehq.com/practices/digital), and run every month on the sites [VerySEOly](https://veryseoly.com) (formerly UK Web Marketing) builds and looks after for UK businesses.
 
-For sites that answer to a regulator or a formal assurance standard, that same hygiene has to be built to a documented baseline and evidenced, not just performed. That is the job of our sibling brand [Custodiance](https://custodiance.com), which delivers managed infrastructure and website care built to your regulator's standard, with the paper trail to prove it. The free checklist here is the shared foundation both stand on: [VerySEOly](https://veryseoly.com) for straightforward website care, and [Custodiance](https://custodiance.com) where the assurance bar is higher.
+For sites that answer to a regulator or a formal assurance standard, that same hygiene has to be built to a documented baseline and evidenced, not just performed. That is the job of our sibling brand [Custodiance](https://custodiance.com), which delivers managed infrastructure and website care built to your regulator's standard, with the paper trail to prove it. The open checklist here is the shared foundation both stand on: [VerySEOly](https://veryseoly.com) for straightforward website care, and [Custodiance](https://custodiance.com) where the assurance bar is higher.
 
 You do not need either of them to use this repo. It is here to be useful on its own.
 
@@ -244,7 +285,7 @@ You do not need either of them to use this repo. It is here to be useful on its 
 
 ## Contributing
 
-Improvements are welcome. If a check is missing, unclear, or plain wrong, open an issue or a pull request. Keep entries in the same shape as the rest: a concrete task, a plain reason, and where possible a way to check it and a way to automate it. Real, do-able items only. A checklist earns its keep by being run, not by being long.
+Improvements are welcome. If a check is missing, unclear, or plain wrong, open an issue or a pull request; see [`CONTRIBUTING.md`](CONTRIBUTING.md). Security problems go through [`SECURITY.md`](SECURITY.md) instead. Keep entries in the same shape as the rest: a concrete task, a plain reason, and where possible a way to check it and a way to automate it. Real, do-able items only. A checklist earns its keep by being run, not by being long.
 
 ---
 
